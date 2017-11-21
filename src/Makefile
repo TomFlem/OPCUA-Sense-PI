@@ -1,7 +1,7 @@
 BIN=../bin
 IDIR =../include
 CC=gcc
-CFLAGS=-I$(IDIR)
+CFLAGS=-I$(IDIR) -pthread
 
 ODIR=obj
 LDIR =../lib
