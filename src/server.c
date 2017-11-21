@@ -75,6 +75,9 @@ void* pollSensors(void *arg){
        
    while (true)
    {
+      sleep(1);
+      //while(imu->IMURead())
+      //{
      	//Create 'temperature' value
       RTIMU_DATA imuData = imu->getIMUData();
       if (pressure != NULL)
@@ -92,21 +95,21 @@ void* pollSensors(void *arg){
       UA_Float tempIn = imuData.temperature;
       UA_Variant_setScalarCopy(myVariant, &tempIn, &UA_TYPES[UA_TYPES_FLOAT]);
       UA_NodeId tempNodeId = UA_NODEID_STRING(1,"Temperature");
-      UA_StatusCode status = UA_Client_writeValueAttribute(client,testNodeId, myVariant);
+      UA_StatusCode status = UA_Client_writeValueAttribute(client,tempNodeId, myVariant);
       
       //Write Pressure
       UA_Float pressIn = imuData.pressure;
       UA_Variant_setScalarCopy(myVariant, &pressIn, &UA_TYPES[UA_TYPES_FLOAT]);
       UA_NodeId pressNodeId = UA_NODEID_STRING(1,"Pressure");
-      UA_StatusCode status = UA_Client_writeValueAttribute(client,pressNodeId, myVariant);
+      status = UA_Client_writeValueAttribute(client,pressNodeId, myVariant);
       
       //Write Humidity
       UA_Float humidIn = imuData.humidity;
       UA_Variant_setScalarCopy(myVariant, &humidIn, &UA_TYPES[UA_TYPES_FLOAT]);
       UA_NodeId humidNodeId = UA_NODEID_STRING(1,"Humidity");
-      UA_StatusCode status = UA_Client_writeValueAttribute(client,humidNodeId, myVariant);
+      status = UA_Client_writeValueAttribute(client,humidNodeId, myVariant);
 
-      sleep(imu->IMUGetPollInterval());
+     // }
    }
 }
 UA_Boolean running = true;
