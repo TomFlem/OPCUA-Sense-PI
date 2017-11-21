@@ -6,7 +6,6 @@
 #include "server.h"
 
 #include "RTIMULib.h"
-
 pthread_t tid[0];
 
 //Method to create Temp Node with attributes to contain the temperature and time
@@ -16,9 +15,9 @@ static void addNodes(UA_Server *server)
    myVar.description = UA_LOCALIZEDTEXT("en-US", "The temperature reading from the Pi Sense Hat");
    myVar.displayName = UA_LOCALIZEDTEXT("en-US", "Temperature");
    myVar.accessLevel = UA_ACCESSLEVELMASK_READ | UA_ACCESSLEVELMASK_WRITE;
-   myVar.dataType = UA_TYPES[UA_TYPES_DOUBLE].typeId;
-   UA_Double myTemp = 0.5;
-   UA_Variant_setScalarCopy(&myVar.value, &myTemp, &UA_TYPES[UA_TYPES_DOUBLE]);
+   myVar.dataType = UA_TYPES[UA_TYPES_FLOAT].typeId;
+   UA_Float myTemp = 0.5;
+   UA_Variant_setScalarCopy(&myVar.value, &myTemp, &UA_TYPES[UA_TYPES_FLOAT]);
    const UA_QualifiedName myTempName = UA_QUALIFIEDNAME(1, "Temperature");
    const UA_NodeId myTempNodeId = UA_NODEID_STRING(1, "Temperature");
    UA_Server_addVariableNode(server, myTempNodeId, UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER), 
@@ -33,22 +32,43 @@ void* pollSensors(void *arg){
    /* Create a client and connect */
    UA_Client *client = UA_Client_new(UA_ClientConfig_default);
    UA_StatusCode status = UA_Client_connect(client, "opc.tcp://localhost:4840");
+   RTIMUSettings *settings = new RTIMUSettings("RTIMULib");
+   RTIMU *imu = RTIMU::createIMU(settings);
+   RTPressure *pressure = RTPressure::createPressure(settings);
+   RTHumidity *humidity = RTHumidity::createHumidity(settings);
+   imu->setSlerpPower(0.02);
+   imu->setGyroEnable(true);
+   imu->setAccelEnable(true);
+   imu->setCompassEnable(true);
+
+   //  set up pressure sensor
+
+   if (pressure != NULL)
+      pressure->pressureInit();
+
+   //  set up humidity sensor
+
+   if (humidity != NULL)
+       humidity->humidityInit();
    while (true)
-   {    
+   {
   	//Create 'temperature' value
-  	RTIMUSettings *settings = new RTIMUSettings("RTIMULib");
-  	RTIMU *imu = createIMU(settings);
-  	
-  	
-  	UA_Variant *myVariant = UA_Variant_new();
-  	UA_Double tempIn = 5.0;
-   UA_Variant_setScalarCopy(myVariant, &tempIn, &UA_TYPES[UA_TYPES_DOUBLE]);
+   RTIMU_DATA imuData = imu->getIMUData();
+   if (pressure != NULL)
+       pressure->pressureRead(imuData);
+
+            //  add the humidity data to the structur
+  if (humidity != NULL)
+      humidity->humidityRead(imuData);
+
+   printf("Temp %4.1f\n",imuData.temperature);
+   UA_Variant *myVariant = UA_Variant_new();
+   UA_Float tempIn = imuData.temperature;
+   UA_Variant_setScalarCopy(myVariant, &tempIn, &UA_TYPES[UA_TYPES_FLOAT]);
    UA_NodeId testNodeId = UA_NODEID_STRING(1,"Temperature");
    UA_StatusCode status = UA_Client_writeValueAttribute(client,testNodeId, myVariant);
-   
-   
    //Sleep for 1 second
-   sleep(1);
+   sleep(imu->IMUGetPollInterval());
    }
 }
 UA_Boolean running = true;
