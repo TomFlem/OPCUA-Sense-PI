@@ -1,7 +1,7 @@
 BIN=../bin
 IDIR =../include
 CC=g++
-CFLAGS=-I$(IDIR) -pthread -lRTIMULib -Wno-write-strings
+CFLAGS=-I$(IDIR) -pthread -lRTIMULib -Wno-write-strings `pkg-config --cflags MagickWand` -lsense
 
 ODIR=obj
 LDIR =../lib

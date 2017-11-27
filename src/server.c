@@ -1,20 +1,32 @@
 
+#include <stdlib.h>
 #include <iostream>
 #include <signal.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <sense/fb.h>
 #include "open62541.h"
 #include "server.h"
 
 #include "RTIMULib.h"
 pthread_t tid[0];
 
+// Replace with any of the fonts in "fonts" directory
+#include "fonts/5x5_font.h"
+
+//#include "fonts/BMSPA_font.h"
+//#define CHAR_WIDTH 8
+
+#define CHAR_WIDTH (sizeof(font) / 96)
+#define CHAR_HEIGHT 8
+#define SCROLL_DELAY 100
+#define LETTER_SPACE 1
+#define LETTER_WIDTH (CHAR_WIDTH + LETTER_SPACE)
 void draw(char c,int x,int y,sense_color_t color,sense_bitmap_t bitmap);
 const unsigned char* character(char c);
 
-int writeLEDchar** argv){
-
+int writeLED(char* argv){
     sense_bitmap_t fb = sense_alloc_fb();
     if (!fb){
         fprintf(stderr,"Could not allocate framebuffer: %s\n",sense_strerror(sense_errno()));
@@ -69,6 +81,8 @@ void draw(char c,int x,int y,sense_color_t color,sense_bitmap_t bitmap) {
 static void sub_handler (UA_UInt32 monId, UA_DataValue *value, void *context) 
 {
    std::cout<<"\ntest\n";
+   UA_String input = *(UA_String*)value->value.data;
+   writeLED((char*)input.data);
 }
 //Method to create Temp Node with attributes to contain the temperature and time
 static void addNodes(UA_Server *server)
@@ -116,7 +130,7 @@ static void addNodes(UA_Server *server)
    myVar.displayName = UA_LOCALIZEDTEXT("en-US", "LEDString");
    myVar.accessLevel = UA_ACCESSLEVELMASK_READ | UA_ACCESSLEVELMASK_WRITE;
    myVar.dataType = UA_TYPES[UA_TYPES_STRING].typeId;
-   UA_String myLEDString;
+   UA_String myLEDString = UA_STRING("TEMP");
    UA_Variant_setScalarCopy(&myVar.value, &myLEDString, &UA_TYPES[UA_TYPES_STRING]);
    const UA_QualifiedName myLEDStringName = UA_QUALIFIEDNAME(1, "LEDString");
    const UA_NodeId myLEDStringNodeId = UA_NODEID_STRING(1, "LEDString");
