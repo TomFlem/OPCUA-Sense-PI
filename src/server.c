@@ -7,7 +7,10 @@
 
 #include "RTIMULib.h"
 pthread_t tid[0];
-
+static void sub_handler (UA_UInt32 monId, UA_DataValue *value, void *context) 
+{
+   std::count<<"\ntest\n";
+}
 //Method to create Temp Node with attributes to contain the temperature and time
 static void addNodes(UA_Server *server)
 {
@@ -48,6 +51,19 @@ static void addNodes(UA_Server *server)
    UA_Server_addVariableNode(server, myHumidNodeId, UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER), 
    UA_NODEID_NUMERIC(0, UA_NS0ID_ORGANIZES), myHumidName, UA_NODEID_NULL, myVar, NULL, NULL);
    UA_Variant_deleteMembers(&myVar.value);
+   
+   myVar = UA_VariableAttributes_default;
+   myVar.description = UA_LOCALIZEDTEXT("en-US", "A String to print to the LED Matrix");
+   myVar.displayName = UA_LOCALIZEDTEXT("en-US", "LEDString");
+   myVar.accessLevel = UA_ACCESSLEVELMASK_READ | UA_ACCESSLEVELMASK_WRITE;
+   myVar.dataType = UA_TYPES[UA_TYPES_STRING].typeId;
+   UA_String myLEDString = " ";
+   UA_Variant_setScalarCopy(&myVar.value, &myLEDString, &UA_TYPES[UA_TYPES_STRING]);
+   const UA_QualifiedName myLEDStringName = UA_QUALIFIEDNAME(1, "LEDString");
+   const UA_NodeId myLEDStringNodeId = UA_NODEID_STRING(1, "LEDString");
+   UA_Server_addVariableNode(server, myLEDStringNodeId, UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER), 
+   UA_NODEID_NUMERIC(0, UA_NS0ID_ORGANIZES), myLEDStringName, UA_NODEID_NULL, myVar, NULL, NULL);
+   UA_Variant_deleteMembers(&myVar.value);
 }
 
 /* Client half of the Server/Client hybrid*/
@@ -73,6 +89,12 @@ void* pollSensors(void *arg){
    if (humidity != NULL)
        humidity->humidityInit();
        
+   // Setup a subscription to monitor the LED string
+   std::string tmpStrNodeID("LEDString");
+   char * chrNodeId = &tmpStrNodeID[0u]; //string to char* for UA C function
+   UA_NodeId nodeId = UA_NODEID_STRING(1, chrNodeId);
+   status = UA_Client_Subscriptions_addMonitoredItem(client, 1, 
+      nodeId, UA_ATTRIBUTEID_VALUE, &sub_handler, NULL, 1);
    while (true)
    {
       sleep(1);
