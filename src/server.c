@@ -1,3 +1,5 @@
+
+#include <iostream>
 #include <signal.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -9,7 +11,7 @@
 pthread_t tid[0];
 static void sub_handler (UA_UInt32 monId, UA_DataValue *value, void *context) 
 {
-   std::count<<"\ntest\n";
+   std::cout<<"\ntest\n";
 }
 //Method to create Temp Node with attributes to contain the temperature and time
 static void addNodes(UA_Server *server)
@@ -57,7 +59,7 @@ static void addNodes(UA_Server *server)
    myVar.displayName = UA_LOCALIZEDTEXT("en-US", "LEDString");
    myVar.accessLevel = UA_ACCESSLEVELMASK_READ | UA_ACCESSLEVELMASK_WRITE;
    myVar.dataType = UA_TYPES[UA_TYPES_STRING].typeId;
-   UA_String myLEDString = " ";
+   UA_String myLEDString;
    UA_Variant_setScalarCopy(&myVar.value, &myLEDString, &UA_TYPES[UA_TYPES_STRING]);
    const UA_QualifiedName myLEDStringName = UA_QUALIFIEDNAME(1, "LEDString");
    const UA_NodeId myLEDStringNodeId = UA_NODEID_STRING(1, "LEDString");
@@ -93,8 +95,12 @@ void* pollSensors(void *arg){
    std::string tmpStrNodeID("LEDString");
    char * chrNodeId = &tmpStrNodeID[0u]; //string to char* for UA C function
    UA_NodeId nodeId = UA_NODEID_STRING(1, chrNodeId);
-   status = UA_Client_Subscriptions_addMonitoredItem(client, 1, 
-      nodeId, UA_ATTRIBUTEID_VALUE, &sub_handler, NULL, 1);
+   UA_UInt32 monId = 0;
+   UA_UInt32 subId = 0;
+
+   UA_Client_Subscriptions_new(client, UA_SubscriptionSettings_default, &subId);
+   status = UA_Client_Subscriptions_addMonitoredItem(client, subId, 
+      nodeId, UA_ATTRIBUTEID_VALUE, &sub_handler, NULL, &monId);
    while (true)
    {
       sleep(1);
@@ -132,6 +138,7 @@ void* pollSensors(void *arg){
       status = UA_Client_writeValueAttribute(client,humidNodeId, myVariant);
 
      // }
+     UA_Client_Subscriptions_manuallySendPublishRequest(client);
    }
 }
 UA_Boolean running = true;
