@@ -136,6 +136,45 @@ static void addNodes(UA_Server *server)
    UA_Server_addVariableNode(server, myLEDStringNodeId, UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER), 
    UA_NODEID_NUMERIC(0, UA_NS0ID_ORGANIZES), myLEDStringName, UA_NODEID_NULL, myVar, NULL, NULL);
    UA_Variant_deleteMembers(&myVar.value);
+   
+   myVar = UA_VariableAttributes_default;
+   myVar.description = UA_LOCALIZEDTEXT("en-US", "Gyro X Axis");
+   myVar.displayName = UA_LOCALIZEDTEXT("en-US", "XAxis");
+   myVar.accessLevel = UA_ACCESSLEVELMASK_READ | UA_ACCESSLEVELMASK_WRITE;
+   myVar.dataType = UA_TYPES[UA_TYPES_FLOAT].typeId;
+   UA_Float myXAxis = 0.5;
+   UA_Variant_setScalarCopy(&myVar.value, &myXAxis, &UA_TYPES[UA_TYPES_FLOAT]);
+   const UA_QualifiedName myXAxisName = UA_QUALIFIEDNAME(1, "XAxis");
+   const UA_NodeId myXAxisNodeId = UA_NODEID_STRING(1, "XAxis");
+   UA_Server_addVariableNode(server, myXAxisNodeId, UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER), 
+   UA_NODEID_NUMERIC(0, UA_NS0ID_ORGANIZES), myXAxisName, UA_NODEID_NULL, myVar, NULL, NULL);
+   UA_Variant_deleteMembers(&myVar.value);
+   
+   myVar = UA_VariableAttributes_default;
+   myVar.description = UA_LOCALIZEDTEXT("en-US", "Gyro Y Axis");
+   myVar.displayName = UA_LOCALIZEDTEXT("en-US", "YAxis");
+   myVar.accessLevel = UA_ACCESSLEVELMASK_READ | UA_ACCESSLEVELMASK_WRITE;
+   myVar.dataType = UA_TYPES[UA_TYPES_FLOAT].typeId;
+   UA_Float myYAxis = 0.5;
+   UA_Variant_setScalarCopy(&myVar.value, &myYAxis, &UA_TYPES[UA_TYPES_FLOAT]);
+   const UA_QualifiedName myYAxisName = UA_QUALIFIEDNAME(1, "YAxis");
+   const UA_NodeId myYAxisNodeId = UA_NODEID_STRING(1, "YAxis");
+   UA_Server_addVariableNode(server, myYAxisNodeId, UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER), 
+   UA_NODEID_NUMERIC(0, UA_NS0ID_ORGANIZES), myYAxisName, UA_NODEID_NULL, myVar, NULL, NULL);
+   UA_Variant_deleteMembers(&myVar.value);
+   
+   myVar = UA_VariableAttributes_default;
+   myVar.description = UA_LOCALIZEDTEXT("en-US", "Gyro Z Axis");
+   myVar.displayName = UA_LOCALIZEDTEXT("en-US", "ZAxis");
+   myVar.accessLevel = UA_ACCESSLEVELMASK_READ | UA_ACCESSLEVELMASK_WRITE;
+   myVar.dataType = UA_TYPES[UA_TYPES_FLOAT].typeId;
+   UA_Float myZAxis = 0.5;
+   UA_Variant_setScalarCopy(&myVar.value, &myZAxis, &UA_TYPES[UA_TYPES_FLOAT]);
+   const UA_QualifiedName myZAxisName = UA_QUALIFIEDNAME(1, "ZAxis");
+   const UA_NodeId myZAxisNodeId = UA_NODEID_STRING(1, "ZAxis");
+   UA_Server_addVariableNode(server, myZAxisNodeId, UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER), 
+   UA_NODEID_NUMERIC(0, UA_NS0ID_ORGANIZES), myZAxisName, UA_NODEID_NULL, myVar, NULL, NULL);
+   UA_Variant_deleteMembers(&myVar.value);
 }
 
 /* Client half of the Server/Client hybrid*/
@@ -209,6 +248,16 @@ void* pollSensors(void *arg){
       UA_NodeId humidNodeId = UA_NODEID_STRING(1,"Humidity");
       status = UA_Client_writeValueAttribute(client,humidNodeId, myVariant);
 
+      //Write XAxis
+      UA_Float xAxisIn = imuData.gyro.x();
+      UA_Variant_setScalarCopy(myVariant, &xAxisIn, &UA_TYPES[UA_TYPES_FLOAT]);
+      UA_NodeId xAxisNodeId = UA_NODEID_STRING(1,"XAxis");
+      status = UA_Client_writeValueAttribute(client,xAxisNodeId, myVariant);
+      
+      //Write YAxis
+      
+      //Write ZAxis
+      
       UA_Client_Subscriptions_manuallySendPublishRequest(client);
    }
 }
