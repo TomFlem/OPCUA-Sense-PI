@@ -25,6 +25,31 @@ pthread_t tid[0];
 void draw(char c,int x,int y,sense_color_t color,sense_bitmap_t bitmap);
 const unsigned char* character(char c);
 
+static UA_ByteString loadCertificate(void) {
+    UA_ByteString certificate = UA_STRING_NULL;
+    FILE *fp = NULL;
+    //FIXME: a potiential bug of locating the certificate, we need to get the path from the server's config
+    fp=fopen("server_cert.der", "rb");
+
+    if(!fp) {
+        errno = 0; // we read errno also from the tcp layer...
+        return certificate;
+    }
+
+    fseek(fp, 0, SEEK_END);
+    certificate.length = (size_t)ftell(fp);
+    certificate.data = (UA_Byte*)UA_malloc(certificate.length*sizeof(UA_Byte));
+    if(!certificate.data)
+        return certificate;
+
+    fseek(fp, 0, SEEK_SET);
+    if(fread(certificate.data, sizeof(UA_Byte), certificate.length, fp) < (size_t)certificate.length)
+        UA_ByteString_deleteMembers(&certificate); // error reading the cert
+    fclose(fp);
+
+    return certificate;
+}
+
 int writeLED(char* argv){
    sense_bitmap_t fb = sense_alloc_fb();
    if (!fb){
