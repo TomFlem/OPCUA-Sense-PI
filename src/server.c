@@ -1,3 +1,4 @@
+
 #include <stdlib.h>
 #include <iostream>
 #include <signal.h>
@@ -50,13 +51,13 @@ static UA_ByteString loadCertificate(void) {
     return certificate;
 }
 
-int writeLED(char* argv){
+int writeLED(char* argv,sense_color_t color){
    sense_bitmap_t fb = sense_alloc_fb();
    if (!fb){
       fprintf(stderr,"Could not allocate framebuffer: %s\n",sense_strerror(sense_errno()));
       exit(1);
    }
-   sense_color_t color = sense_make_color_rgb(0xff,0xff,0);
+   //sense_color_t color = sense_make_color_rgb(0xff,0xff,0);
    sense_bitmap_t buffer = sense_alloc_bitmap();
    char* word = argv;
    int idx;
@@ -105,7 +106,25 @@ void draw(char c,int x,int y,sense_color_t color,sense_bitmap_t bitmap) {
 static void sub_handler (UA_UInt32 monId, UA_DataValue *value, void *context) 
 {
    UA_String input = *(UA_String*)value->value.data;
-   writeLED((char*)input.data);
+
+   sense_color_t color;// = sense_make_color_rgb(0xff,0,0);
+   if (strcmp((char*)input.data,"Red")==0)
+   {
+      color = sense_make_color_rgb(0xff,0,0);
+   }
+   else if (strcmp((char*)input.data,"Blue")==0)
+   {
+      color = sense_make_color_rgb(0,0,0xff);
+   }
+   else if (strcmp((char*)input.data,"Yellow")==0)
+   {
+      color = sense_make_color_rgb(0xff,0xff,0);
+   }
+   else if (strcmp((char*)input.data,"Green")==0)
+   {
+      color = sense_make_color_rgb(0,0xff,0);
+   }
+   writeLED((char*)input.data,color);
 }
 //Method to create Temp Node with attributes to contain the temperature and time
 static void addNodes(UA_Server *server)
