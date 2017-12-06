@@ -211,8 +211,12 @@ void* pollSensors(void *arg){
    UA_StatusCode status = UA_Client_connect(client, "opc.tcp://localhost:4840");
    RTIMUSettings *settings = new RTIMUSettings("RTIMULib");
    RTIMU *imu = RTIMU::createIMU(settings);
+   
+   imu->IMUInit();
+   
    RTPressure *pressure = RTPressure::createPressure(settings);
    RTHumidity *humidity = RTHumidity::createHumidity(settings);
+   
    imu->setSlerpPower(0.02);
    imu->setGyroEnable(true);
    imu->setAccelEnable(true);
