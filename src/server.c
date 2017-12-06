@@ -5,9 +5,9 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <sense/fb.h>
+
 #include "open62541.h"
 #include "server.h"
-
 #include "RTIMULib.h"
 pthread_t tid[0];
 
@@ -79,7 +79,6 @@ void draw(char c,int x,int y,sense_color_t color,sense_bitmap_t bitmap) {
 
 static void sub_handler (UA_UInt32 monId, UA_DataValue *value, void *context) 
 {
-   std::cout<<"\ntest\n";
    UA_String input = *(UA_String*)value->value.data;
    writeLED((char*)input.data);
 }
@@ -188,11 +187,14 @@ void* pollSensors(void *arg){
    RTIMU *imu = RTIMU::createIMU(settings);
    RTPressure *pressure = RTPressure::createPressure(settings);
    RTHumidity *humidity = RTHumidity::createHumidity(settings);
+
+   imu->IMUInit();
+
    imu->setSlerpPower(0.02);
    imu->setGyroEnable(true);
    imu->setAccelEnable(true);
    imu->setCompassEnable(true);
-
+   
    //  set up pressure sensor
    if (pressure != NULL)
    {
@@ -214,10 +216,14 @@ void* pollSensors(void *arg){
    UA_Client_Subscriptions_new(client, UA_SubscriptionSettings_default, &subId);
    status = UA_Client_Subscriptions_addMonitoredItem(client, subId, 
       nodeId, UA_ATTRIBUTEID_VALUE, &sub_handler, NULL, &monId);
+   std::cout<<"Starting up subscriptions..";
+   sleep(1);
    while (true)
    {
       sleep(1);
-     	//Create 'temperature' value
+      //usleep(imu->IMUGetPollInterval() * 1000);
+      
+      //Create 'temperature' value
       RTIMU_DATA imuData = imu->getIMUData();
       if (pressure != NULL)
       {
@@ -249,6 +255,8 @@ void* pollSensors(void *arg){
       status = UA_Client_writeValueAttribute(client,humidNodeId, myVariant);
 
       //Write XAxis
+      //std::cout<<"X: "<<RTMath::displayDegrees("", imuData.fusionPose)<<"\n";
+      //printf("Sample rate: %s\n", RTMath::displayDegrees("", imuData.fusionPose));
       UA_Float xAxisIn = imuData.gyro.x();
       UA_Variant_setScalarCopy(myVariant, &xAxisIn, &UA_TYPES[UA_TYPES_FLOAT]);
       UA_NodeId xAxisNodeId = UA_NODEID_STRING(1,"XAxis");
@@ -257,7 +265,6 @@ void* pollSensors(void *arg){
       //Write YAxis
       
       //Write ZAxis
-      
       UA_Client_Subscriptions_manuallySendPublishRequest(client);
    }
 }
