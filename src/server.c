@@ -273,10 +273,18 @@ int main(int argc, char ** argv)
    signal(SIGTERM, stopHandler);
 
    //Setup Server
-   UA_ServerConfig * config;
+    UA_ByteString certificate = loadCertificate();
+    UA_ServerConfig *config = UA_ServerConfig_new_minimal(4840, &certificate);
+    UA_ByteString_deleteMembers(&certificate);
+    /* uncomment next line to add a custom hostname */
+    // UA_ServerConfig_set_customHostname(config, UA_STRING("custom"));
+    
+   /*UA_ServerConfig * config;
    config = UA_ServerConfig_new_default();
    UA_ServerNetworkLayer nl = UA_ServerNetworkLayerTCP(
-                               UA_ConnectionConfig_default, 4840);
+                               UA_ConnectionConfig_default, 4840);*/
+                               
+                               
    UA_Server *server = UA_Server_new(config);
    addNodes(server);
    
